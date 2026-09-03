@@ -1,0 +1,4 @@
+# Runtime credentials and databases
+server/.env
+server/*.db
+deploy/cloudflared/camera-tunnel.env

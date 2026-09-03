@@ -1,0 +1,14 @@
+[Unit]
+Description=Cloudflare Tunnel for Raspberry Pi Camera web application
+After=network-online.target nginx.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/cloudflared/camera-tunnel.env
+ExecStart=/usr/bin/cloudflared tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

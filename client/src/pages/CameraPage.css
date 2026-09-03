@@ -1,0 +1,140 @@
+.camera-page {
+  min-height: 100vh;
+  background: #111;
+  color: white;
+}
+
+.camera-header {
+  height: 72px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #181818;
+}
+
+.camera-header h1 {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+
+.camera-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.camera-status.connected {
+  color: #7ee787;
+}
+
+.camera-status.connecting,
+.camera-status.reconnecting {
+  color: #e3b341;
+}
+
+.camera-status.disconnected,
+.camera-status.error {
+  color: #ff7b72;
+}
+
+.status-dot {
+  font-size: 10px;
+}
+
+.camera-content {
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.camera-container {
+  position: relative;
+  width: 1280px;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  background: black;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.camera-container video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: black;
+}
+
+.camera-overlay {
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.camera-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+
+  color: #ddd;
+  font-size: 15px;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+
+  border: 3px solid #444;
+  border-top-color: white;
+  border-radius: 50%;
+
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.logout-button {
+  padding: 9px 16px;
+
+  border: 1px solid #555;
+  border-radius: 6px;
+
+  background: transparent;
+  color: white;
+
+  cursor: pointer;
+}
+
+.logout-button:hover {
+  background: #333;
+}
+
+@media (max-width: 700px) {
+  .camera-header {
+    padding: 0 16px;
+  }
+
+  .camera-header h1 {
+    font-size: 17px;
+  }
+
+  .camera-content {
+    padding: 8px;
+  }
+
+  .camera-container {
+    border-radius: 6px;
+  }
+}
