@@ -20,12 +20,41 @@ const JWT_SECRET = process.env.JWT_SECRET ?? "";
 const TAPO_DEVICE_IP = process.env.TAPO_DEVICE_IP;
 const TAPO_EMAIL = process.env.TAPO_EMAIL;
 const TAPO_PASSWORD = process.env.TAPO_PASSWORD;
+const LOGIN_MAX_ATTEMPTS = 10;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const loginAttempts = new Map();
 if (!JWT_SECRET) {
     throw new Error("JWT_SECRET is not configured");
 }
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 let db;
+function getLoginClientKey(req) {
+    // Express is reachable only through local Nginx, which supplies X-Real-IP.
+    return req.get("x-real-ip") || req.ip;
+}
+function isLoginRateLimited(key, now) {
+    const attempt = loginAttempts.get(key);
+    if (!attempt) {
+        return false;
+    }
+    if (now >= attempt.resetAt) {
+        loginAttempts.delete(key);
+        return false;
+    }
+    return attempt.attempts >= LOGIN_MAX_ATTEMPTS;
+}
+function recordLoginFailure(key, now) {
+    const existing = loginAttempts.get(key);
+    if (!existing || now >= existing.resetAt) {
+        loginAttempts.set(key, {
+            attempts: 1,
+            resetAt: now + LOGIN_WINDOW_MS,
+        });
+        return;
+    }
+    existing.attempts += 1;
+}
 function requireAuth(req, res, next) {
     const authorization = req.header("authorization");
     const match = authorization?.match(/^Bearer\s+(.+)$/i);
@@ -202,7 +231,10 @@ app.post("/api/mediamtx/auth", async (req, res) => {
 app.post("/api/login", async (req, res) => {
     try {
         const { username, password } = req.body;
-        if (!username || !password) {
+        if (typeof username !== "string" ||
+            typeof password !== "string" ||
+            !username ||
+            !password) {
             return res.status(400).json({
                 message: "Username and password are required",
             });
