@@ -16,4 +16,33 @@ export const login = async (
   return response.data;
 };
 
+export interface TapoPowerState {
+  on: boolean;
+}
+
+const authConfig = () => ({
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem("cameraToken") ?? ""}`,
+  },
+});
+
+export const getTapoPower = async () => {
+  const response = await API.get<TapoPowerState>(
+    "/tapo/power",
+    authConfig()
+  );
+
+  return response.data;
+};
+
+export const setTapoPower = async (on: boolean) => {
+  const response = await API.put<TapoPowerState>(
+    "/tapo/power",
+    { on },
+    authConfig()
+  );
+
+  return response.data;
+};
+
 export default API;

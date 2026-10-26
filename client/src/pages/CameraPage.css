@@ -46,6 +46,8 @@
 .camera-content {
   padding: 24px;
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
 }
 
@@ -65,6 +67,62 @@
   height: 100%;
   object-fit: contain;
   background: black;
+}
+
+.tapo-control {
+  width: 1280px;
+  max-width: 100%;
+  margin-top: 16px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: #181818;
+  border: 1px solid #333;
+  border-radius: 8px;
+}
+
+.tapo-control h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.tapo-control p {
+  margin: 0;
+  color: #bbb;
+  font-size: 14px;
+}
+
+.tapo-power-button {
+  margin-left: auto;
+  padding: 10px 18px;
+  border: 1px solid #37a567;
+  border-radius: 6px;
+  background: #176b3a;
+  color: white;
+  cursor: pointer;
+}
+
+.tapo-power-button:hover:not(:disabled) {
+  background: #20864b;
+}
+
+.tapo-power-button.is-on {
+  border-color: #a64c4c;
+  background: #742d2d;
+}
+
+.tapo-power-button.is-on:hover:not(:disabled) {
+  background: #913838;
+}
+
+.tapo-power-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tapo-control .tapo-error {
+  color: #ff7b72;
 }
 
 .camera-overlay {

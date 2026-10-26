@@ -1,4 +1,5 @@
 # Runtime credentials and databases
 server/.env
 server/*.db
+server/node_modules/
 deploy/cloudflared/camera-tunnel.env

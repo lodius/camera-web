@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import axios from "axios";
 import "./CameraPage.css";
 import "../lib/reader.js";
+import { getTapoPower, setTapoPower } from "../api/api";
 
 interface CameraPageProps {
   onLogout: () => void;
@@ -47,6 +49,64 @@ export default function CameraPage({
 
   const [status, setStatus] =
     useState<CameraStatus>("connecting");
+
+  const [plugOn, setPlugOn] = useState<boolean | null>(null);
+  const [plugLoading, setPlugLoading] = useState(true);
+  const [plugPending, setPlugPending] = useState(false);
+  const [plugError, setPlugError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getTapoPower()
+      .then(({ on }) => {
+        if (!cancelled) {
+          setPlugOn(on);
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          const message = axios.isAxiosError<{ message?: string }>(error)
+            ? error.response?.data?.message ?? error.message
+            : error instanceof Error
+              ? error.message
+              : "Could not read the plug state";
+          setPlugError(message);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setPlugLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handlePlugToggle = async () => {
+    if (plugOn === null) {
+      return;
+    }
+
+    setPlugPending(true);
+    setPlugError("");
+
+    try {
+      const { on } = await setTapoPower(!plugOn);
+      setPlugOn(on);
+    } catch (error: unknown) {
+      const message = axios.isAxiosError<{ message?: string }>(error)
+        ? error.response?.data?.message ?? error.message
+        : error instanceof Error
+          ? error.message
+          : "Could not change the plug state";
+      setPlugError(message);
+    } finally {
+      setPlugPending(false);
+    }
+  };
 
   const closeReader = useCallback(() => {
     if (readerRef.current) {
@@ -264,6 +324,39 @@ export default function CameraPage({
             </div>
           )}
         </div>
+
+        <section className="tapo-control" aria-label="Tapo P100 power">
+          <div>
+            <h2>Tapo P100</h2>
+            <p>
+              {plugLoading
+                ? "Checking plug..."
+                : plugOn === null
+                  ? "Plug state unavailable"
+                  : `Plug is ${plugOn ? "on" : "off"}`}
+            </p>
+          </div>
+
+          <button
+            className={`tapo-power-button${plugOn ? " is-on" : ""}`}
+            type="button"
+            onClick={() => void handlePlugToggle()}
+            disabled={plugLoading || plugPending || plugOn === null}
+            aria-pressed={plugOn ?? undefined}
+          >
+            {plugPending
+              ? "Updating..."
+              : plugOn
+                ? "Turn off"
+                : "Turn on"}
+          </button>
+
+          {plugError && (
+            <p className="tapo-error" role="alert">
+              {plugError}
+            </p>
+          )}
+        </section>
       </main>
     </div>
   );
