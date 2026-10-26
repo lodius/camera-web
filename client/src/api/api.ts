@@ -8,12 +8,24 @@ export const login = async (
   username: string,
   password: string
 ) => {
-  const response = await API.post("/login", {
-    username,
-    password,
-  });
+  try {
+    const response = await API.post("/login", {
+      username,
+      password,
+    });
 
-  return response.data;
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const message = error.response?.data?.message;
+
+      if (typeof message === "string") {
+        throw new Error(message);
+      }
+    }
+
+    throw error;
+  }
 };
 
 export default API;

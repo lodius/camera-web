@@ -13,6 +13,16 @@ const PORT = Number(process.env.PORT ?? 3000);
 const HOST = process.env.HOST ?? "127.0.0.1";
 const JWT_SECRET = process.env.JWT_SECRET;
 
+
+const LOGIN_MAX_ATTEMPTS = 10;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
+type LoginAttempt = {
+  attempts: number;
+  resetAt: number;
+};
+
+const loginAttempts = new Map<string, LoginAttempt>();
 if (!JWT_SECRET) {
   throw new Error("JWT_SECRET is not configured");
 }
@@ -22,6 +32,41 @@ app.use(cors());
 app.use(express.json());
 
 let db: Database;
+function getLoginClientKey(req: express.Request) {
+  // Express is reachable only through local Nginx. Cloudflare supplies this
+  // header for Tunnel requests; Nginx supplies X-Real-IP for Tailscale/LAN.
+  return req.get("cf-connecting-ip") || req.get("x-real-ip") || req.ip;
+}
+
+function isLoginRateLimited(key: string, now: number) {
+  const attempt = loginAttempts.get(key);
+
+  if (!attempt) {
+    return false;
+  }
+
+  if (now >= attempt.resetAt) {
+    loginAttempts.delete(key);
+    return false;
+  }
+
+  return attempt.attempts >= LOGIN_MAX_ATTEMPTS;
+}
+
+function recordLoginFailure(key: string, now: number) {
+  const existing = loginAttempts.get(key);
+
+  if (!existing || now >= existing.resetAt) {
+    loginAttempts.set(key, {
+      attempts: 1,
+      resetAt: now + LOGIN_WINDOW_MS,
+    });
+    return;
+  }
+
+  existing.attempts += 1;
+}
+
 
 async function initializeDatabase() {
   db = await open({
@@ -132,11 +177,17 @@ app.post("/api/mediamtx/auth", async (req, res) => {
   }
 });
 
+
 app.post("/api/login", async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    if (!username || !password) {
+    if (
+      typeof username !== "string" ||
+      typeof password !== "string" ||
+      !username ||
+      !password
+    ) {
       return res.status(400).json({
         message: "Username and password are required",
       });
@@ -194,6 +245,7 @@ app.post("/api/login", async (req, res) => {
     });
   }
 });
+
 
 async function startServer() {
   try {
